@@ -3,18 +3,28 @@ import { MOCK_MOVIES, MOCK_GENRES } from '../data/mockMovies';
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 
+// Default TMDB credentials provided by user
+const DEFAULT_TMDB_KEY =
+  import.meta.env.VITE_TMDB_ACCESS_TOKEN ||
+  import.meta.env.VITE_TMDB_API_KEY ||
+  'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTc3NzFiNDkzNjQwNWI4ZDJkM2RhNGQyMjY3ZDkzMSIsIm5iZiI6MTc5MjU0MjQ5MC40NTksInN1YiI6IjZhZDgwNzFhNjUwOGFjMjJkNmVjMmRhNCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.yrHmSk-NW8IlekNCRAe-i-M38ifxwraEHkE1fPbP7nM';
+
 // Key management in localStorage
 export function getStoredTmdbKey() {
-  return localStorage.getItem('tmdb_api_key') || '';
+  const local = localStorage.getItem('tmdb_api_key');
+  if (local !== null) return local; // If user explicitly cleared or changed it
+  return DEFAULT_TMDB_KEY;
 }
 
 export function setStoredTmdbKey(key) {
   if (key) {
     localStorage.setItem('tmdb_api_key', key.trim());
   } else {
-    localStorage.removeItem('tmdb_api_key');
+    // If explicitly set to empty, store empty string so user can test demo mode
+    localStorage.setItem('tmdb_api_key', '');
   }
 }
+
 
 // Build request headers or params based on token type (v3 API key vs v4 Bearer token)
 function getAuthOptions() {
