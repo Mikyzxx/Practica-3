@@ -1,134 +1,51 @@
 {
   "users": [
     {
-      "id": "u-demo-1",
-      "name": "Alex Rivera",
-      "username": "alex_cine",
-      "email": "demo@cinecritica.com",
-      "passwordHash": "$2a$10$wT5g1Z6b0200gY/4a4t37uI2eGeqm3J5tQ0yV1Vq5Wv2C4N5vL6zO",
-      "avatar": "🍿",
-      "badge": "Crítico Destacado",
-      "bio": "Crítico aficionado del cine de ciencia ficción y thrillers psicológicos.",
-      "createdAt": "2026-01-15T10:00:00.000Z"
-    },
-    {
-      "id": "u-demo-2",
-      "name": "Sofía Martínez",
-      "username": "sofia_films",
-      "email": "sofia@cinecritica.com",
-      "passwordHash": "$2a$10$wT5g1Z6b0200gY/4a4t37uI2eGeqm3J5tQ0yV1Vq5Wv2C4N5vL6zO",
-      "avatar": "🎬",
-      "badge": "Cineasta",
-      "bio": "Amante del cine de autor, la dirección de arte y bandas sonoras épicas.",
-      "createdAt": "2026-02-10T14:30:00.000Z"
-    },
-    {
-      "id": "u-demo-3",
-      "name": "Carlos Gómez",
-      "username": "charly_critic",
-      "email": "carlos@cinecritica.com",
-      "passwordHash": "$2a$10$wT5g1Z6b0200gY/4a4t37uI2eGeqm3J5tQ0yV1Vq5Wv2C4N5vL6zO",
+      "id": "u-1792551059162",
+      "name": "Miguel Cardenas",
+      "username": "miguel_cardenas449",
+      "email": "maaico_054@hotmail.com",
+      "passwordHash": "$2b$10$34ai.NrCYnmxZNijP.4pm.Vto.ucuYkp9s2RIyUpxipaiE1Y98CLy",
       "avatar": "⭐",
-      "badge": "Miembro Pro",
-      "bio": "Siempre buscando la próxima obra maestra cinematográfica.",
-      "createdAt": "2026-03-01T09:15:00.000Z"
+      "badge": "Cineasta Novato",
+      "bio": "anime",
+      "createdAt": "2026-10-21T02:50:59.162Z"
     }
   ],
   "reviews": [
     {
-      "id": "rev-1792542910063",
-      "movieId": 157336,
-      "movieTitle": "Interstellar",
-      "moviePoster": "",
-      "movieYear": "",
-      "userId": "u-demo-1",
-      "userName": "Alex Rivera",
-      "userAvatar": "🍿",
-      "rating": 10,
-      "headline": "Prueba automática",
-      "content": "Excelente obra maestra audiovisual.",
-      "hasSpoilers": false,
+      "id": "rev-1792551126931",
+      "movieId": 1400837,
+      "movieTitle": "La otra madre",
+      "moviePoster": "/vsde9OnhjFMlJz8Wi6Z6drZ7GG5.jpg",
+      "movieYear": "2026",
+      "userId": "u-1792551059162",
+      "userName": "Miguel Cardenas",
+      "userAvatar": "⭐",
+      "rating": 9,
+      "headline": "hola",
+      "content": "juas",
+      "hasSpoilers": true,
       "likes": 0,
       "likedBy": [],
-      "createdAt": "2026-10-21T00:35:10.063Z"
+      "createdAt": "2026-10-21T02:52:06.931Z"
     },
     {
-      "id": "rev-101",
-      "movieId": 157336,
-      "movieTitle": "Interstellar",
-      "moviePoster": "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
-      "movieYear": "2014",
-      "userId": "u-demo-1",
-      "userName": "Alex Rivera",
-      "userAvatar": "🍿",
-      "rating": 10,
-      "headline": "Una odisea emocional y visual sin precedentes",
-      "content": "La combinación de la banda sonora magistral de Hans Zimmer con la dirección implacable de Nolan crea una experiencia cósmica inigualable. El concepto del amor como una fuerza que trasciende las dimensiones del tiempo y el espacio me conmueve cada vez que la veo.",
-      "hasSpoilers": false,
-      "likes": 24,
-      "likedBy": [
-        "u-demo-2",
-        "u-demo-3"
-      ],
-      "createdAt": "2026-09-12T18:20:00.000Z"
-    },
-    {
-      "id": "rev-102",
-      "movieId": 27205,
-      "movieTitle": "Inception",
-      "moviePoster": "/o24WqXQ325eX9j6sPq2PZc9b1yv.jpg",
-      "movieYear": "2010",
-      "userId": "u-demo-2",
-      "userName": "Sofía Martínez",
-      "userAvatar": "🎬",
-      "rating": 9,
-      "headline": "Un rompecabezas brillante que nunca pasa de moda",
-      "content": "El diseño de producción y los efectos prácticos en el pasillo giratorio siguen siendo asombrosos más de una década después. Leonardo DiCaprio entrega una de sus interpretaciones más vulnerables.",
-      "hasSpoilers": false,
-      "likes": 18,
-      "likedBy": [
-        "u-demo-1"
-      ],
-      "createdAt": "2026-09-20T12:00:00.000Z"
-    },
-    {
-      "id": "rev-103",
-      "movieId": 872585,
-      "movieTitle": "Oppenheimer",
-      "moviePoster": "/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
-      "movieYear": "2023",
-      "userId": "u-demo-1",
-      "userName": "Alex Rivera",
-      "userAvatar": "🍿",
-      "rating": 10,
-      "headline": "Cillian Murphy monumental en una biografía electrizante",
-      "content": "El montaje sonoro durante la prueba Trinity y las audiencias a puerta cerrada te mantienen al borde del asiento durante 3 horas. Una auténtica lección de cine dramático.",
-      "hasSpoilers": false,
-      "likes": 31,
-      "likedBy": [
-        "u-demo-3"
-      ],
-      "createdAt": "2026-10-02T21:40:00.000Z"
-    },
-    {
-      "id": "rev-104",
-      "movieId": 693134,
-      "movieTitle": "Dune: Part Two",
-      "moviePoster": "/8b8R8l88Qje9dn9OE8PY05Nx1S8.jpg",
-      "movieYear": "2024",
-      "userId": "u-demo-3",
-      "userName": "Carlos Gómez",
+      "id": "rev-1792551079537",
+      "movieId": 1255833,
+      "movieTitle": "Whalefall",
+      "moviePoster": "/jmGVSLOrH9IxtcffbldrEHX4IfB.jpg",
+      "movieYear": "2026",
+      "userId": "u-1792551059162",
+      "userName": "Miguel Cardenas",
       "userAvatar": "⭐",
-      "rating": 9.5,
-      "headline": "Monstruosamente épica en escala y visión",
-      "content": "Denis Villeneuve logró lo que parecía imposible: adaptar la segunda mitad del libro de Frank Herbert elevando la mitología, los gusanos de arena y la intensidad política al nivel de El Señor de los Anillos.",
-      "hasSpoilers": false,
-      "likes": 15,
-      "likedBy": [
-        "u-demo-1",
-        "u-demo-2"
-      ],
-      "createdAt": "2026-10-10T16:15:00.000Z"
+      "rating": 9,
+      "headline": "Aburrida",
+      "content": "No me gusto",
+      "hasSpoilers": true,
+      "likes": 0,
+      "likedBy": [],
+      "createdAt": "2026-10-21T02:51:19.537Z"
     }
   ]
 }

@@ -3,7 +3,6 @@ import {
   fetchCurrentUser,
   loginUser,
   registerUser,
-  quickDemoLogin,
   logoutUser,
   getStoredUser
 } from '../services/api';
@@ -69,19 +68,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const demoLogin = async () => {
-    try {
-      const demoUser = await quickDemoLogin();
-      setUser(demoUser);
-      setAuthModalOpen(false);
-      showToast(`Conectado como usuario demo: ${demoUser.name}`);
-      return { success: true };
-    } catch (err) {
-      showToast(err.message, 'error');
-      return { success: false, error: err.message };
-    }
-  };
-
   const logout = () => {
     logoutUser();
     setUser(null);
@@ -108,7 +94,6 @@ export function AuthProvider({ children }) {
         closeAuth,
         login,
         register,
-        demoLogin,
         logout,
         showToast
       }}

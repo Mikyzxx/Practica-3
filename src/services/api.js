@@ -72,15 +72,6 @@ export async function registerUser({ name, email, password, avatar, bio }) {
   return data.user;
 }
 
-export async function quickDemoLogin() {
-  const data = await request('/auth/demo-login', {
-    method: 'POST'
-  });
-  setAuthToken(data.token);
-  setStoredUser(data.user);
-  return data.user;
-}
-
 export async function fetchCurrentUser() {
   try {
     const user = await request('/auth/me');
@@ -111,6 +102,13 @@ export async function submitMovieReview(reviewData) {
   return request('/reviews', {
     method: 'POST',
     body: JSON.stringify(reviewData)
+  });
+}
+
+export async function updateMovieReview(reviewId, updateData) {
+  return request(`/reviews/${reviewId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updateData)
   });
 }
 

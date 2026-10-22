@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
-import { X, User, Mail, Lock, Sparkles, Film, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, User, Mail, Lock, Film, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const AVATAR_OPTIONS = ['🍿', '🎬', '⭐', '📽️', '🎭', '🕶️', '🚀', '🦊'];
 
 export function AuthModal() {
-  const { authModalOpen, authModalMode, openAuth, closeAuth, login, register, demoLogin } = useAuth();
+  const { authModalOpen, authModalMode, openAuth, closeAuth, login, register } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('🍿');
   const [bio, setBio] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!authModalOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') closeAuth();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [authModalOpen, closeAuth]);
 
   if (!authModalOpen) return null;
 
@@ -35,12 +46,6 @@ export function AuthModal() {
         setErrorMessage(res.error || 'Error al crear la cuenta.');
       }
     }
-    setLoading(false);
-  };
-
-  const handleDemoClick = async () => {
-    setLoading(true);
-    await demoLogin();
     setLoading(false);
   };
 
@@ -67,25 +72,6 @@ export function AuthModal() {
               ? 'Accede para calificar películas, compartir reseñas y guardar favoritos.'
               : 'Únete a nuestra comunidad de aficionados al cine y debate con otros cinéfilos.'}
           </p>
-        </div>
-
-        {/* Quick Demo Access Bar */}
-        <div className="auth-demo-banner">
-          <div className="auth-demo-info">
-            <Sparkles size={16} className="sparkle-gold" />
-            <div>
-              <strong>¿Solo quieres probar la app?</strong>
-              <p>Inicia sesión al instante con la cuenta de demostración.</p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="btn-demo-action"
-            onClick={handleDemoClick}
-            disabled={loading}
-          >
-            Acceso Rápido Demo
-          </button>
         </div>
 
         {/* Tab Selector */}
@@ -163,16 +149,24 @@ export function AuthModal() {
 
           <div className="form-group">
             <label>Contraseña</label>
-            <div className="input-with-icon">
+            <div className="input-with-icon input-password-group">
               <Lock size={16} />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 minLength={6}
                 placeholder="Mínimo 6 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <button
+                type="button"
+                className="btn-toggle-pwd"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 

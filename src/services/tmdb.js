@@ -9,19 +9,18 @@ const DEFAULT_TMDB_KEY =
   import.meta.env.VITE_TMDB_API_KEY ||
   'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTc3NzFiNDkzNjQwNWI4ZDJkM2RhNGQyMjY3ZDkzMSIsIm5iZiI6MTc5MjU0MjQ5MC40NTksInN1YiI6IjZhZDgwNzFhNjUwOGFjMjJkNmVjMmRhNCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.yrHmSk-NW8IlekNCRAe-i-M38ifxwraEHkE1fPbP7nM';
 
-// Key management in localStorage
+// Key management
 export function getStoredTmdbKey() {
   const local = localStorage.getItem('tmdb_api_key');
-  if (local !== null) return local; // If user explicitly cleared or changed it
+  if (local && local.trim().length > 10) return local.trim();
   return DEFAULT_TMDB_KEY;
 }
 
 export function setStoredTmdbKey(key) {
-  if (key) {
+  if (key && key.trim()) {
     localStorage.setItem('tmdb_api_key', key.trim());
   } else {
-    // If explicitly set to empty, store empty string so user can test demo mode
-    localStorage.setItem('tmdb_api_key', '');
+    localStorage.removeItem('tmdb_api_key');
   }
 }
 

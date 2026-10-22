@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { MovieCard } from './MovieCard';
 import { MOCK_GENRES } from '../services/tmdb';
-import { Filter, Sparkles, SlidersHorizontal, Key } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 
 export function MovieGrid({
   movies,
@@ -9,9 +9,8 @@ export function MovieGrid({
   subtitle,
   onOpenMovie,
   reviewsMap = {},
-  isDemoMode,
-  onOpenKeyModal,
-  loading
+  loading,
+  isFavoritesView = false
 }) {
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [sortBy, setSortBy] = useState('default');
@@ -83,27 +82,11 @@ export function MovieGrid({
         ))}
       </div>
 
-      {/* Demo Mode Notice Banner if active */}
-      {isDemoMode && (
-        <div className="demo-notice-banner">
-          <div className="demo-notice-text">
-            <Sparkles size={16} className="sparkle-icon" />
-            <span>
-              <strong>Modo de demostración activo:</strong> Mostrando catálogo curado con reseñas de ejemplo. Puedes conectar tu propia clave TMDB en cualquier momento para explorar millones de títulos en vivo.
-            </span>
-          </div>
-          <button onClick={onOpenKeyModal} className="btn-secondary btn-sm-notice">
-            <Key size={13} />
-            Configurar TMDB Key
-          </button>
-        </div>
-      )}
-
       {/* Movies Grid */}
       {loading ? (
         <div className="grid-loading-state">
           <div className="cinema-spinner"></div>
-          <p>Cargando películas de TMDB...</p>
+          <p>Cargando cartelera de películas...</p>
         </div>
       ) : filteredMovies.length > 0 ? (
         <div className="movies-grid">
@@ -118,15 +101,25 @@ export function MovieGrid({
         </div>
       ) : (
         <div className="grid-empty-state">
-          <FilmEmptyIcon />
-          <h3>No se encontraron películas</h3>
-          <p>Intenta cambiar el género seleccionado o la búsqueda para encontrar títulos.</p>
-          <button
-            className="btn-secondary"
-            onClick={() => { setSelectedGenre(null); setSortBy('default'); }}
-          >
-            Restablecer filtros
-          </button>
+          {isFavoritesView ? (
+            <>
+              <div style={{ fontSize: '48px', marginBottom: '12px' }}>❤️</div>
+              <h3>Aún no tienes películas favoritas guardadas</h3>
+              <p>Explora el catálogo y presiona el icono de corazón en cualquier película para armar tu lista personal.</p>
+            </>
+          ) : (
+            <>
+              <FilmEmptyIcon />
+              <h3>No se encontraron películas</h3>
+              <p>Intenta cambiar el género seleccionado o la búsqueda para encontrar títulos.</p>
+              <button
+                className="btn-secondary"
+                onClick={() => { setSelectedGenre(null); setSortBy('default'); }}
+              >
+                Restablecer filtros
+              </button>
+            </>
+          )}
         </div>
       )}
     </section>

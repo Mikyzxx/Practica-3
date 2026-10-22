@@ -1,11 +1,14 @@
 import React from 'react';
-import { Star, MessageSquare, Calendar, Play } from 'lucide-react';
+import { Star, MessageSquare, Calendar, Play, Heart } from 'lucide-react';
 import { getImageUrl } from '../services/tmdb';
+import { useFavorites } from '../context/FavoritesContext';
 
 export function MovieCard({ movie, onOpenMovie, reviewsCount }) {
+  const { isFavorite, toggleFavorite } = useFavorites();
   const posterUrl = getImageUrl(movie.poster_path, 'w500');
   const year = movie.release_date ? movie.release_date.split('-')[0] : '';
   const rating = Number(movie.vote_average || 0).toFixed(1);
+  const fav = isFavorite(movie.id);
 
   return (
     <div className="movie-card" onClick={() => onOpenMovie(movie)}>
@@ -34,6 +37,17 @@ export function MovieCard({ movie, onOpenMovie, reviewsCount }) {
               <span>{reviewsCount}</span>
             </span>
           )}
+
+          <button
+            className={`poster-favorite-btn ${fav ? 'active' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(movie);
+            }}
+            title={fav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+          >
+            <Heart size={14} fill={fav ? '#ef4444' : 'rgba(0,0,0,0.4)'} color={fav ? '#ef4444' : '#ffffff'} />
+          </button>
         </div>
 
         {/* Hover Overlay */}
@@ -53,7 +67,7 @@ export function MovieCard({ movie, onOpenMovie, reviewsCount }) {
             {year || 'N/A'}
           </span>
           <span className="movie-card-votes">
-            {movie.vote_count ? `${movie.vote_count.toLocaleString()} votos` : 'TMDB'}
+            {movie.vote_count ? `${movie.vote_count.toLocaleString()} votos` : 'Destacada'}
           </span>
         </div>
       </div>

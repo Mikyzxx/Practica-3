@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { FavoritesProvider, useFavorites } from './context/FavoritesContext';
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/HeroBanner';
 import { MovieGrid } from './components/MovieGrid';
 import { MovieModal } from './components/MovieModal';
 import { AuthModal } from './components/AuthModal';
-import { TmdbKeyModal } from './components/TmdbKeyModal';
 import { CommunityFeed } from './components/CommunityFeed';
 import {
   getTrendingMovies,
@@ -16,51 +16,67 @@ import {
   searchMovies
 } from './services/tmdb';
 import { fetchRecentReviews } from './services/api';
-import { Film, Heart, ExternalLink } from 'lucide-react';
+import { Film, Heart } from 'lucide-react';
 
 function CineCriticaApp() {
+  const { favorites } = useFavorites();
   const [activeCategory, setActiveCategory] = useState('trending');
   const [searchQuery, setSearchQuery] = useState('');
   const [movies, setMovies] = useState([]);
   const [heroMovie, setHeroMovie] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Modal states
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [startWithTrailer, setStartWithTrailer] = useState(false);
-  const [keyModalOpen, setKeyModalOpen] = useState(false);
 
   // Community reviews count cache { [movieId]: count }
   const [reviewsMap, setReviewsMap] = useState({});
 
+  // Refresh review count cache helper
+  const loadReviewsCount = useCallback(async () => {
+    try {
+      const res = await fetchRecentReviews(100);
+      if (res && res.reviews) {
+        const counts = {};
+        res.reviews.forEach(r => {
+          counts[r.movieId] = (counts[r.movieId] || 0) + 1;
+        });
+        setReviewsMap(counts);
+      }
+    } catch (err) {
+      console.warn('Could not load reviews count:', err);
+    }
+  }, []);
+
   // Fetch reviews map on mount
   useEffect(() => {
-    async function loadReviewsCount() {
-      try {
-        const res = await fetchRecentReviews(100);
-        if (res && res.reviews) {
-          const counts = {};
-          res.reviews.forEach(r => {
-            counts[r.movieId] = (counts[r.movieId] || 0) + 1;
-          });
-          setReviewsMap(counts);
-        }
-      } catch (err) {
-        console.warn('Could not load reviews count:', err);
-      }
-    }
     loadReviewsCount();
-  }, []);
+  }, [loadReviewsCount]);
 
   // Fetch movies based on active category or search query
   const loadMovies = useCallback(async () => {
+    if (activeCategory === 'favorites') {
+      let list = [...favorites];
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        list = list.filter(m => (m.title || '').toLowerCase().includes(q));
+      }
+      setMovies(list);
+      setLoading(false);
+      return;
+    }
+
+    if (activeCategory === 'community' || activeCategory === 'my_reviews') {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       if (searchQuery.trim()) {
         const res = await searchMovies(searchQuery);
         setMovies(res.movies || []);
-        setIsDemoMode(res.isDemo);
       } else {
         let res;
         switch (activeCategory) {
@@ -79,7 +95,6 @@ function CineCriticaApp() {
             break;
         }
         setMovies(res.movies || []);
-        setIsDemoMode(res.isDemo);
 
         // Set top movie for the hero banner if in trending/popular and no search
         if (res.movies && res.movies.length > 0 && !heroMovie) {
@@ -91,7 +106,7 @@ function CineCriticaApp() {
     } finally {
       setLoading(false);
     }
-  }, [activeCategory, searchQuery, heroMovie]);
+  }, [activeCategory, searchQuery, heroMovie, favorites]);
 
   // Trigger load on category or search query changes
   useEffect(() => {
@@ -111,18 +126,14 @@ function CineCriticaApp() {
   const handleCloseMovie = () => {
     setSelectedMovie(null);
     setStartWithTrailer(false);
-  };
-
-  const handleKeyUpdated = () => {
-    setKeyModalOpen(false);
-    // Reload movies with updated key
-    loadMovies();
+    loadReviewsCount();
   };
 
   // Section title helpers
   const getSectionTitle = () => {
     if (searchQuery.trim()) return `Resultados para «${searchQuery}»`;
     switch (activeCategory) {
+      case 'favorites': return `Mis Películas Favoritas (${favorites.length})`;
       case 'popular': return 'Películas Populares';
       case 'top_rated': return 'Mejor Valoradas por la Crítica';
       case 'upcoming': return 'Próximos Estrenos en Cine';
@@ -132,8 +143,9 @@ function CineCriticaApp() {
   };
 
   const getSectionSubtitle = () => {
-    if (searchQuery.trim()) return 'Títulos coincidentes de la base de datos de TMDB';
+    if (searchQuery.trim()) return 'Títulos coincidentes con tu búsqueda';
     switch (activeCategory) {
+      case 'favorites': return 'Tu colección personal de películas guardadas para ver y seguir';
       case 'popular': return 'Las películas más reproducidas y comentadas del momento';
       case 'top_rated': return 'Obras maestras con las puntuaciones más altas de la historia';
       case 'upcoming': return 'Lanzamientos programados para los próximos meses';
@@ -153,13 +165,15 @@ function CineCriticaApp() {
         }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onOpenKeyModal={() => setKeyModalOpen(true)}
-        isDemoMode={isDemoMode}
       />
 
       <main className="main-content">
-        {activeCategory === 'community' ? (
-          <CommunityFeed onOpenMovie={handleOpenMovie} />
+        {activeCategory === 'community' || activeCategory === 'my_reviews' ? (
+          <CommunityFeed
+            onOpenMovie={handleOpenMovie}
+            initialFilter={activeCategory === 'my_reviews' ? 'mine' : 'all'}
+            onReviewsCountChange={loadReviewsCount}
+          />
         ) : (
           <>
             {/* Show Hero billboard if on trending and not searching */}
@@ -177,9 +191,8 @@ function CineCriticaApp() {
               subtitle={getSectionSubtitle()}
               onOpenMovie={handleOpenMovie}
               reviewsMap={reviewsMap}
-              isDemoMode={isDemoMode}
-              onOpenKeyModal={() => setKeyModalOpen(true)}
               loading={loading}
+              isFavoritesView={activeCategory === 'favorites'}
             />
           </>
         )}
@@ -213,8 +226,8 @@ function CineCriticaApp() {
           </div>
 
           <div className="footer-col-academic">
-            <h4>Práctica 3 - Desarrollo Web</h4>
-            <p>Arquitectura React + Express + TMDB API.</p>
+            <h4>CineCrítica</h4>
+            <p>Catálogo cinematográfico y comunidad de reseñas en tiempo real.</p>
             <p className="footer-academic-meta">
               Diseño con Glassmorphism, autenticación JWT, base de datos local y modales interactivos.
             </p>
@@ -233,18 +246,12 @@ function CineCriticaApp() {
           movie={selectedMovie}
           onClose={handleCloseMovie}
           startWithTrailer={startWithTrailer}
+          onReviewsUpdated={loadReviewsCount}
         />
       )}
 
       {/* Auth Modal (Login / Register) */}
       <AuthModal />
-
-      {/* TMDB API Key Configuration Modal */}
-      <TmdbKeyModal
-        isOpen={keyModalOpen}
-        onClose={() => setKeyModalOpen(false)}
-        onKeyUpdated={handleKeyUpdated}
-      />
     </div>
   );
 }
@@ -252,7 +259,9 @@ function CineCriticaApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <CineCriticaApp />
+      <FavoritesProvider>
+        <CineCriticaApp />
+      </FavoritesProvider>
     </AuthProvider>
   );
 }

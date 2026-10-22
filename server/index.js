@@ -133,8 +133,8 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Credenciales inválidas. Verifica tu correo.' });
     }
 
-    // Check password (supports default demo user bcrypt hash or plain fallback)
-    const valid = await bcrypt.compare(password, user.passwordHash).catch(() => false) || password === 'password123';
+    // Check password
+    const valid = await bcrypt.compare(password, user.passwordHash).catch(() => false);
 
     if (!valid) {
       return res.status(400).json({ error: 'Contraseña incorrecta.' });
@@ -156,32 +156,6 @@ app.post('/api/auth/login', async (req, res) => {
     console.error('Login error:', err);
     return res.status(500).json({ error: 'Error interno en el inicio de sesión.' });
   }
-});
-
-// Demo Instant Login
-app.post('/api/auth/demo-login', (req, res) => {
-  const db = readDB();
-  const demoUser = db.users[0] || {
-    id: 'u-demo-1',
-    name: 'Alex Rivera',
-    username: 'alex_cine',
-    email: 'demo@cinecritica.com',
-    avatar: '🍿',
-    badge: 'Crítico Destacado'
-  };
-
-  const token = jwt.sign(
-    { id: demoUser.id, email: demoUser.email, name: demoUser.name, avatar: demoUser.avatar },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-
-  const { passwordHash: _, ...userSafe } = demoUser;
-  return res.json({
-    message: 'Sesión demo iniciada',
-    token,
-    user: userSafe
-  });
 });
 
 // Current User Profile
@@ -283,6 +257,48 @@ app.post('/api/reviews', authenticateToken, (req, res) => {
   } catch (err) {
     console.error('Error creating review:', err);
     return res.status(500).json({ error: 'Error al publicar la reseña.' });
+  }
+});
+
+// Update review (own review)
+app.put('/api/reviews/:id', authenticateToken, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rating, headline, content, hasSpoilers } = req.body;
+    const db = readDB();
+
+    const review = db.reviews.find(r => r.id === id);
+    if (!review) {
+      return res.status(404).json({ error: 'Reseña no encontrada.' });
+    }
+
+    if (review.userId !== req.user.id) {
+      return res.status(403).json({ error: 'No tienes permiso para editar esta reseña.' });
+    }
+
+    if (rating !== undefined) {
+      review.rating = Math.min(10, Math.max(1, Number(rating)));
+    }
+    if (headline !== undefined) {
+      review.headline = headline.trim();
+    }
+    if (content !== undefined) {
+      review.content = content.trim();
+    }
+    if (hasSpoilers !== undefined) {
+      review.hasSpoilers = Boolean(hasSpoilers);
+    }
+    review.updatedAt = new Date().toISOString();
+
+    writeDB(db);
+
+    return res.json({
+      message: 'Reseña actualizada exitosamente.',
+      review
+    });
+  } catch (err) {
+    console.error('Error updating review:', err);
+    return res.status(500).json({ error: 'Error al actualizar la reseña.' });
   }
 });
 

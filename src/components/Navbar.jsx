@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { Search, Film, Key, User, LogOut, Sparkles, MessageSquare, ChevronDown } from 'lucide-react';
+import { Search, Film, User, LogOut, ChevronDown, Heart, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getStoredTmdbKey } from '../services/tmdb';
+import { useFavorites } from '../context/FavoritesContext';
 
 export function Navbar({
   activeCategory,
   onSelectCategory,
   searchQuery,
-  onSearchChange,
-  onOpenKeyModal,
-  isDemoMode
+  onSearchChange
 }) {
-  const { user, openAuth, demoLogin, logout } = useAuth();
+  const { user, openAuth, logout } = useAuth();
+  const { favorites } = useFavorites();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const hasTmdbKey = Boolean(getStoredTmdbKey());
 
   return (
     <header className="navbar-wrapper">
@@ -25,7 +23,6 @@ export function Navbar({
           </div>
           <div className="brand-text">
             <span className="brand-title">Cine<span className="brand-accent">Crítica</span></span>
-            <span className="brand-badge">TMDB v3</span>
           </div>
         </div>
 
@@ -52,19 +49,6 @@ export function Navbar({
 
         {/* Right Action Items */}
         <div className="navbar-actions">
-          {/* TMDB Key Status Button */}
-          <button
-            onClick={onOpenKeyModal}
-            className={`tmdb-status-pill ${hasTmdbKey ? 'status-active' : 'status-demo'}`}
-            title="Configurar TMDB API Key"
-          >
-            <Key size={14} />
-            <span className="status-dot"></span>
-            <span className="status-label">
-              {hasTmdbKey ? 'TMDB Activo' : 'Modo Demo'}
-            </span>
-          </button>
-
           {/* User Auth Section */}
           {user ? (
             <div className="user-profile-menu">
@@ -94,7 +78,33 @@ export function Navbar({
                     <div className="dropdown-badge-row">
                       <span className="badge-pill badge-accent">{user.badge || 'Crítico'}</span>
                     </div>
+
                     <div className="dropdown-divider"></div>
+
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        onSelectCategory('favorites');
+                      }}
+                    >
+                      <Heart size={16} className="text-accent" />
+                      <span>Mis Favoritos ({favorites.length})</span>
+                    </button>
+
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        onSelectCategory('my_reviews');
+                      }}
+                    >
+                      <MessageSquare size={16} className="text-accent" />
+                      <span>Mis Reseñas Publicadas</span>
+                    </button>
+
+                    <div className="dropdown-divider"></div>
+
                     <button
                       className="dropdown-item dropdown-item-danger"
                       onClick={() => {
@@ -111,14 +121,6 @@ export function Navbar({
             </div>
           ) : (
             <div className="auth-buttons-group">
-              <button
-                onClick={() => demoLogin()}
-                className="btn-demo-quick"
-                title="Acceder con 1 clic como crítico demo"
-              >
-                <Sparkles size={14} />
-                <span>Demo</span>
-              </button>
               <button
                 onClick={() => openAuth('login')}
                 className="btn-primary"
@@ -159,10 +161,16 @@ export function Navbar({
             📅 Próximos Estrenos
           </button>
           <button
-            className={`cat-pill ${activeCategory === 'community' ? 'active' : ''}`}
+            className={`cat-pill ${activeCategory === 'community' || activeCategory === 'my_reviews' ? 'active' : ''}`}
             onClick={() => onSelectCategory('community')}
           >
-            💬 Reseñas de la Comunidad
+            💬 Reseñas Comunidad
+          </button>
+          <button
+            className={`cat-pill ${activeCategory === 'favorites' ? 'active' : ''}`}
+            onClick={() => onSelectCategory('favorites')}
+          >
+            ❤️ Favoritos {favorites.length > 0 ? `(${favorites.length})` : ''}
           </button>
         </div>
       </nav>

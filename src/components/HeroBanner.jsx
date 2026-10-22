@@ -1,13 +1,16 @@
 import React from 'react';
-import { Star, Play, MessageSquare, Calendar, Clock, Film } from 'lucide-react';
+import { Star, Play, MessageSquare, Calendar, Clock, Film, Heart } from 'lucide-react';
 import { getImageUrl } from '../services/tmdb';
+import { useFavorites } from '../context/FavoritesContext';
 
 export function HeroBanner({ movie, onOpenMovie }) {
+  const { isFavorite, toggleFavorite } = useFavorites();
   if (!movie) return null;
 
   const backdropUrl = getImageUrl(movie.backdrop_path || movie.poster_path, 'original');
   const year = movie.release_date ? movie.release_date.split('-')[0] : '';
   const rating = Number(movie.vote_average || 0).toFixed(1);
+  const fav = isFavorite(movie.id);
 
   return (
     <section className="hero-banner-section">
@@ -23,7 +26,7 @@ export function HeroBanner({ movie, onOpenMovie }) {
         <div className="hero-meta-badges">
           <span className="badge-pill badge-gold">
             <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
-            {rating} / 10 en TMDB
+            {rating} / 10
           </span>
           {year && (
             <span className="badge-pill">
@@ -70,6 +73,15 @@ export function HeroBanner({ movie, onOpenMovie }) {
               Ver Tráiler
             </button>
           )}
+
+          <button
+            onClick={() => toggleFavorite(movie)}
+            className={`btn-secondary hero-btn-sub ${fav ? 'btn-fav-active' : ''}`}
+            title={fav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+          >
+            <Heart size={18} fill={fav ? '#ef4444' : 'none'} color={fav ? '#ef4444' : 'currentColor'} />
+            <span>{fav ? 'En Favoritos' : 'Añadir a Favoritos'}</span>
+          </button>
         </div>
       </div>
     </section>

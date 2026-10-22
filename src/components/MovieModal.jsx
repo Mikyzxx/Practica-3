@@ -13,19 +13,25 @@ import {
   Send,
   Play,
   Eye,
-  EyeOff
+  EyeOff,
+  Heart,
+  Share2,
+  Pencil
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
 import { getMovieDetails, getImageUrl } from '../services/tmdb';
 import {
   fetchMovieReviews,
   submitMovieReview,
+  updateMovieReview,
   deleteMovieReview,
   toggleReviewLike
 } from '../services/api';
 
-export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = false }) {
-  const { user, openAuth, demoLogin, showToast } = useAuth();
+export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = false, onReviewsUpdated }) {
+  const { user, openAuth, showToast } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const [movie, setMovie] = useState(initialMovie);
   const [loadingDetails, setLoadingDetails] = useState(true);
@@ -36,7 +42,8 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
   const [averageCommunityRating, setAverageCommunityRating] = useState(null);
   const [loadingReviews, setLoadingReviews] = useState(true);
 
-  // New review form state
+  // Review form state (Add or Edit)
+  const [editingReviewId, setEditingReviewId] = useState(null);
   const [rating, setRating] = useState(9);
   const [hoverRating, setHoverRating] = useState(0);
   const [headline, setHeadline] = useState('');
@@ -46,6 +53,15 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
 
   // Spoilers revealed tracker
   const [revealedSpoilers, setRevealedSpoilers] = useState({});
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   // Load detailed movie information & reviews on mount
   useEffect(() => {
@@ -86,7 +102,7 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
     };
   }, [initialMovie.id]);
 
-  // Handle submitting review
+  // Handle submitting review (New or Edit)
   const handleSubmitReview = async (e) => {
     e.preventDefault();
 
@@ -102,34 +118,81 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
 
     try {
       setSubmittingReview(true);
-      const res = await submitMovieReview({
-        movieId: movie.id,
-        movieTitle: movie.title,
-        moviePoster: movie.poster_path || '',
-        movieYear: movie.release_date ? movie.release_date.split('-')[0] : '',
-        rating,
-        headline,
-        content,
-        hasSpoilers
-      });
 
-      // Update reviews list
-      setReviews(prev => [res.review, ...prev]);
-      showToast('¡Tu reseña ha sido publicada con éxito!');
+      if (editingReviewId) {
+        // Edit existing review
+        const res = await updateMovieReview(editingReviewId, {
+          rating,
+          headline,
+          content,
+          hasSpoilers
+        });
+
+        setReviews(prev =>
+          prev.map(r => (r.id === editingReviewId ? res.review : r))
+        );
+        showToast('¡Reseña actualizada con éxito!');
+        setEditingReviewId(null);
+      } else {
+        // Create new review
+        const res = await submitMovieReview({
+          movieId: movie.id,
+          movieTitle: movie.title,
+          moviePoster: movie.poster_path || '',
+          movieYear: movie.release_date ? movie.release_date.split('-')[0] : '',
+          rating,
+          headline,
+          content,
+          hasSpoilers
+        });
+
+        // Update reviews list
+        setReviews(prev => [res.review, ...prev]);
+        showToast('¡Tu reseña ha sido publicada con éxito!');
+      }
 
       // Reset form
       setHeadline('');
       setContent('');
       setHasSpoilers(false);
 
-      // Recalculate average
-      const newReviews = [res.review, ...reviews];
-      const sum = newReviews.reduce((acc, r) => acc + Number(r.rating || 0), 0);
-      setAverageCommunityRating((sum / newReviews.length).toFixed(1));
+      onReviewsUpdated?.();
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  // Start editing a review
+  const handleStartEdit = (rev) => {
+    setEditingReviewId(rev.id);
+    setRating(rev.rating);
+    setHeadline(rev.headline || '');
+    setContent(rev.content);
+    setHasSpoilers(Boolean(rev.hasSpoilers));
+
+    // Smooth scroll to form
+    const el = document.querySelector('.review-box-card');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReviewId(null);
+    setHeadline('');
+    setContent('');
+    setHasSpoilers(false);
+  };
+
+  // Share movie link / details
+  const handleShareMovie = () => {
+    const text = `¡Descubre «${movie.title}» en CineCrítica!`;
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: movie.title, text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(`${text} ${url}`);
+      showToast('¡Enlace de la película copiado al portapapeles!');
     }
   };
 
@@ -142,6 +205,7 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
       const remaining = reviews.filter(r => r.id !== reviewId);
       setReviews(remaining);
       showToast('Reseña eliminada.');
+      onReviewsUpdated?.();
 
       if (remaining.length > 0) {
         const sum = remaining.reduce((acc, r) => acc + Number(r.rating || 0), 0);
@@ -269,10 +333,36 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
 
           <div className="modal-details-col">
             <div className="modal-title-row">
-              <h1 className="modal-movie-title">{movie.title}</h1>
-              {movie.original_title && movie.original_title !== movie.title && (
-                <span className="modal-original-title">({movie.original_title})</span>
-              )}
+              <div className="modal-title-wrap">
+                <h1 className="modal-movie-title">{movie.title}</h1>
+                {movie.original_title && movie.original_title !== movie.title && (
+                  <span className="modal-original-title">({movie.original_title})</span>
+                )}
+              </div>
+
+              <div className="modal-action-buttons">
+                <button
+                  className={`btn-modal-action ${isFavorite(movie.id) ? 'active-fav' : ''}`}
+                  onClick={() => toggleFavorite(movie)}
+                  title={isFavorite(movie.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                >
+                  <Heart
+                    size={16}
+                    fill={isFavorite(movie.id) ? '#ef4444' : 'none'}
+                    color={isFavorite(movie.id) ? '#ef4444' : 'currentColor'}
+                  />
+                  <span>{isFavorite(movie.id) ? 'En Favoritos' : 'Favorito'}</span>
+                </button>
+
+                <button
+                  className="btn-modal-action"
+                  onClick={handleShareMovie}
+                  title="Compartir película"
+                >
+                  <Share2 size={16} />
+                  <span>Compartir</span>
+                </button>
+              </div>
             </div>
 
             {movie.tagline && (
@@ -281,9 +371,9 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
 
             {/* Badges / Metrics */}
             <div className="modal-badges-row">
-              <span className="badge-pill badge-gold" title="Calificación TMDB">
+              <span className="badge-pill badge-gold" title="Calificación general">
                 <Star size={14} fill="#fbbf24" stroke="#fbbf24" />
-                TMDB: {tmdbScore}/10
+                Crítica: {tmdbScore}/10
               </span>
 
               {averageCommunityRating ? (
@@ -450,14 +540,29 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
                     <span>Esta reseña contiene spoilers de la trama</span>
                   </label>
 
-                  <button
-                    type="submit"
-                    disabled={submittingReview}
-                    className="btn-primary btn-submit-review"
-                  >
-                    <Send size={15} />
-                    {submittingReview ? 'Publicando...' : 'Publicar Reseña'}
-                  </button>
+                  <div className="review-form-actions-right">
+                    {editingReviewId && (
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="btn-secondary btn-cancel-edit"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="btn-primary btn-submit-review"
+                    >
+                      <Send size={15} />
+                      {submittingReview
+                        ? 'Guardando...'
+                        : editingReviewId
+                        ? 'Guardar Cambios'
+                        : 'Publicar Reseña'}
+                    </button>
+                  </div>
                 </div>
               </form>
             ) : (
@@ -473,15 +578,7 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
                     className="btn-primary"
                   >
                     <User size={15} />
-                    Iniciar Sesión
-                  </button>
-                  <button
-                    onClick={() => demoLogin()}
-                    className="btn-secondary"
-                    title="Entra en 1 segundo con la cuenta demo de Alex Rivera"
-                  >
-                    <Sparkles size={15} />
-                    Acceso Rápido Demo
+                    Iniciar Sesión / Registrarse
                   </button>
                 </div>
               </div>
@@ -525,13 +622,22 @@ export function MovieModal({ movie: initialMovie, onClose, startWithTrailer = fa
                         </span>
 
                         {isAuthor && (
-                          <button
-                            className="btn-delete-review"
-                            onClick={() => handleDeleteReview(rev.id)}
-                            title="Eliminar mi reseña"
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          <div className="author-actions-group">
+                            <button
+                              className="btn-edit-review"
+                              onClick={() => handleStartEdit(rev)}
+                              title="Editar mi reseña"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              className="btn-delete-review"
+                              onClick={() => handleDeleteReview(rev.id)}
+                              title="Eliminar mi reseña"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
